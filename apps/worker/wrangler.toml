@@ -14,7 +14,6 @@ namespace_id = "2026062001"
   limit = 60
   period = 10
 
-# Replace calendar.example.com with the real hostname before deploying.
-# [[routes]]
-# pattern = "calendar.example.com"
-# custom_domain = true
+[[routes]]
+pattern = "daymark.agentclub.dev/calendar/*"
+zone_name = "agentclub.dev"
