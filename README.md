@@ -25,7 +25,7 @@ Build outputs are written under each app, for example `apps/docs/dist`.
 ## Deploy
 
 ```sh
-pnpm deploy
+pnpm run deploy
 ```
 
 The Worker path is:
@@ -51,7 +51,7 @@ Build command:
 pnpm build
 
 Deploy command:
-pnpm deploy
+pnpm run deploy
 ```
 
 For the Pages documentation site, use:

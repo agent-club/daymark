@@ -7,7 +7,7 @@
   "scripts": {
     "build": "pnpm --filter @daymark/calendar build && pnpm --filter @daymark/docs build && pnpm --filter @daymark/worker build",
     "test": "node test/calendar.test.mjs",
-    "deploy": "pnpm --filter @daymark/worker deploy"
+    "deploy": "pnpm --filter @daymark/worker run deploy"
   },
   "devDependencies": {
     "@daymark/calendar": "workspace:*"
