@@ -1,0 +1,1583 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Daymark 提供中国法定节假日、调休补班、纪念日和二十四节气的 iCalendar 日历订阅。">
+    <title>Daymark 中国节日订阅</title>
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f7efe0;
+        --paper-strong: #fff9ed;
+        --ink: #181611;
+        --ink-soft: #40382d;
+        --muted: #716554;
+        --line: rgba(82, 64, 42, .2);
+        --line-strong: rgba(82, 64, 42, .34);
+        --cinnabar: #b61518;
+        --cinnabar-dark: #7f0d10;
+        --gold: #b98935;
+        --gold-soft: #ead5a7;
+        --jade: #12786e;
+        --jade-soft: #e2f0eb;
+        --night: #171717;
+        --night-line: rgba(237, 209, 153, .28);
+        --panel: rgba(255, 250, 240, .86);
+        --shadow: rgba(58, 38, 19, .18);
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image: url("./assets/almanac-landscape.png");
+        background-repeat: no-repeat;
+        background-position: center top;
+        background-size: 100% auto;
+        font-family: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", Georgia, ui-serif, serif;
+        line-height: 1.6;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background:
+          linear-gradient(180deg, rgba(247, 239, 224, .34), rgba(247, 239, 224, .9) 68%, #f7efe0);
+      }
+      a { color: inherit; }
+      button, input { font: inherit; }
+
+      .site-shell {
+        width: min(1180px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 28px 0 56px;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        min-height: 52px;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 22px;
+        font-weight: 760;
+        letter-spacing: 0;
+      }
+      .seal {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border: 2px solid var(--cinnabar);
+        color: var(--cinnabar);
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1.05;
+        text-align: center;
+      }
+      .brand-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        padding: 0 7px;
+        border-radius: 4px;
+        background: var(--cinnabar);
+        color: white;
+        font: 700 12px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        color: var(--ink-soft);
+        font: 650 15px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .nav a {
+        border-radius: 6px;
+        text-decoration: none;
+      }
+      .brand:focus-visible,
+      .nav a:focus-visible,
+      .button:focus-visible,
+      .copy-input:focus-visible {
+        outline: 3px solid rgba(182, 21, 24, .2);
+        outline-offset: 4px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.02fr) minmax(360px, .78fr);
+        gap: 46px;
+        align-items: center;
+        min-height: min(760px, 78vh);
+        padding: 70px 0 44px;
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--cinnabar);
+        font: 780 15px/1.2 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .eyebrow::before {
+        content: "";
+        width: 36px;
+        height: 2px;
+        background: var(--gold);
+      }
+      h1 {
+        max-width: 710px;
+        margin: 28px 0 0;
+        font-size: clamp(52px, 7.2vw, 92px);
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+      h1 .red { color: var(--cinnabar); }
+      h2 {
+        margin: 0;
+        font-size: clamp(28px, 3vw, 42px);
+        line-height: 1.12;
+        letter-spacing: 0;
+      }
+      h3 {
+        margin: 0;
+        font-size: 19px;
+        line-height: 1.25;
+        letter-spacing: 0;
+      }
+      p { margin: 0; color: var(--muted); }
+      .lead {
+        max-width: 660px;
+        margin-top: 24px;
+        color: var(--ink-soft);
+        font-size: 20px;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-top: 20px;
+      }
+      .meta-pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 0 11px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 249, 237, .72);
+        color: var(--ink-soft);
+        font: 680 13px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .subscribe-panel {
+        max-width: 660px;
+        margin-top: 34px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        box-shadow: 0 18px 48px var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+      .copy-row {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        min-height: 54px;
+        padding: 8px;
+        border: 1px solid rgba(82, 64, 42, .16);
+        border-radius: 8px;
+        background: rgba(255, 253, 246, .86);
+      }
+      .link-token {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--jade);
+        font: 800 13px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .copy-input {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        color: var(--ink);
+        font: 520 14px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .copy-input::selection { background: rgba(182, 21, 24, .18); }
+      .panel-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 1px;
+        margin-top: 12px;
+        border: 1px solid rgba(82, 64, 42, .14);
+        border-radius: 8px;
+        overflow: hidden;
+        background: rgba(82, 64, 42, .14);
+      }
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 253, 246, .9);
+        color: var(--ink);
+        text-decoration: none;
+        font: 760 14px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        cursor: pointer;
+        transition: transform .18s ease, border-color .18s ease, background-color .18s ease, color .18s ease;
+      }
+      .button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(182, 21, 24, .42);
+      }
+      .button.primary {
+        border-color: var(--cinnabar);
+        background: var(--cinnabar);
+        color: white;
+      }
+      .button.primary:hover { background: var(--cinnabar-dark); }
+      .panel-actions .button {
+        min-height: 48px;
+        border: 0;
+        border-radius: 0;
+        background: rgba(255, 253, 246, .84);
+      }
+      .panel-actions .button.primary { background: var(--cinnabar); }
+      .copy-status {
+        display: block;
+        min-height: 22px;
+        margin-top: 10px;
+        color: var(--jade);
+        font: 740 13px/1.4 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .credit-line {
+        margin-top: 14px;
+        color: var(--muted);
+        font: 650 14px/1.4 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .credit-line a {
+        color: var(--jade);
+        font-weight: 800;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 4px;
+      }
+
+      .almanac-card {
+        position: relative;
+        min-height: 560px;
+        padding: 28px;
+      }
+      .hanger {
+        position: absolute;
+        inset: 0 42px auto;
+        height: 52px;
+        border-top: 10px solid rgba(185, 137, 53, .82);
+        border-radius: 22px 22px 0 0;
+        filter: drop-shadow(0 10px 14px rgba(58, 38, 19, .16));
+      }
+      .page-card {
+        position: relative;
+        margin-top: 32px;
+        min-height: 500px;
+        padding: 34px 30px 28px;
+        border: 1px solid rgba(151, 103, 39, .55);
+        border-radius: 4px;
+        background:
+          linear-gradient(180deg, rgba(255, 253, 246, .92), rgba(249, 239, 215, .94));
+        box-shadow:
+          14px 18px 0 rgba(98, 68, 31, .18),
+          0 30px 60px rgba(58, 38, 19, .2);
+      }
+      .page-card::before,
+      .page-card::after {
+        content: "";
+        position: absolute;
+        top: -34px;
+        width: 28px;
+        height: 56px;
+        border: 8px solid rgba(167, 117, 39, .78);
+        border-bottom-color: transparent;
+        border-radius: 999px 999px 0 0;
+      }
+      .page-card::before { left: 44px; }
+      .page-card::after { right: 44px; }
+      .page-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--gold);
+        font-size: 18px;
+      }
+      .date-display {
+        display: grid;
+        place-items: center;
+        min-height: 206px;
+        margin: 22px 0;
+        border: 1px solid rgba(185, 137, 53, .45);
+        text-align: center;
+      }
+      .date-display span {
+        display: block;
+        color: var(--cinnabar);
+        font-size: 28px;
+        font-weight: 760;
+      }
+      .date-display strong {
+        display: block;
+        margin-top: 8px;
+        font-size: clamp(76px, 9vw, 118px);
+        line-height: .9;
+        letter-spacing: 0;
+      }
+      .date-display small {
+        display: block;
+        margin-top: 8px;
+        color: var(--ink-soft);
+        font-size: 19px;
+      }
+      .beijing-clock {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        margin-top: 14px;
+        padding: 0 12px;
+        border: 1px solid rgba(185, 137, 53, .35);
+        border-radius: 999px;
+        color: var(--cinnabar);
+        font: 760 16px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      .almanac-tags {
+        display: grid;
+        gap: 10px;
+        margin: 0 0 26px;
+      }
+      .tag-row {
+        display: grid;
+        grid-template-columns: 32px minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+      }
+      .tag-row b {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        background: var(--gold);
+        color: white;
+      }
+      .tag-row:nth-child(2) b { background: var(--night); }
+      .tag-row p {
+        color: var(--ink-soft);
+        font-size: 15px;
+      }
+      .solar-note {
+        padding-top: 18px;
+        border-top: 1px solid rgba(185, 137, 53, .32);
+      }
+      .solar-note strong {
+        display: block;
+        margin-bottom: 7px;
+        font-size: 22px;
+      }
+
+      .timeline-band {
+        margin: 16px calc(50% - 50vw) 0;
+        background: var(--night);
+        color: white;
+        border-top: 3px solid var(--gold);
+        border-bottom: 3px solid var(--gold);
+      }
+      .timeline-inner {
+        width: min(1180px, calc(100% - 40px));
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 148px minmax(0, 1fr);
+        min-height: 196px;
+      }
+      .timeline-title {
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--cinnabar);
+        font-size: 28px;
+        font-weight: 760;
+        line-height: 1.24;
+      }
+      .timeline-scroll {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(132px, 1fr);
+        align-items: center;
+        gap: 0;
+        overflow-x: auto;
+        padding: 24px 8px;
+      }
+      .moment {
+        position: relative;
+        display: grid;
+        justify-items: center;
+        gap: 10px;
+        min-width: 132px;
+        text-align: center;
+      }
+      .moment::before {
+        content: "";
+        position: absolute;
+        top: 54px;
+        left: -50%;
+        right: 50%;
+        height: 1px;
+        background: var(--night-line);
+      }
+      .moment:first-child::before { display: none; }
+      .moment-date {
+        display: grid;
+        place-items: center;
+        width: 72px;
+        height: 72px;
+        border: 1px solid var(--night-line);
+        border-radius: 999px;
+        color: var(--gold-soft);
+        font: 700 13px/1.1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .moment-date strong {
+        display: block;
+        color: white;
+        font-size: 25px;
+        line-height: 1.1;
+      }
+      .moment.today .moment-date {
+        font-size: 12px;
+      }
+      .moment.today .moment-date strong {
+        font-size: 25px;
+      }
+      .moment.active .moment-date {
+        border-color: rgba(255, 255, 255, .28);
+        background: var(--cinnabar);
+        color: #f7d998;
+        box-shadow: 0 0 0 6px rgba(182, 21, 24, .22);
+      }
+      .moment.today .moment-date {
+        border-color: rgba(255, 255, 255, .46);
+        background: var(--jade);
+        color: #d9f4ed;
+        box-shadow: 0 0 0 6px rgba(18, 120, 110, .2);
+      }
+      .moment p {
+        color: #f4deb1;
+        font-size: 16px;
+      }
+      .moment-link {
+        color: #f4deb1;
+        text-decoration: none;
+        text-underline-offset: 4px;
+      }
+      .moment-link:hover {
+        color: white;
+        text-decoration: underline;
+      }
+      .moment-link:focus-visible {
+        outline: 3px solid rgba(244, 222, 177, .22);
+        outline-offset: 4px;
+      }
+      .moment small {
+        display: block;
+        color: rgba(255, 255, 255, .62);
+        font: 650 13px/1.4 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .moment small:empty {
+        display: none;
+      }
+
+      section {
+        padding: 72px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .section-grid {
+        display: grid;
+        grid-template-columns: minmax(240px, 330px) minmax(0, 1fr);
+        gap: 58px;
+        align-items: start;
+      }
+      .section-kicker {
+        margin-bottom: 12px;
+        color: var(--cinnabar);
+        font: 800 13px/1.2 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        letter-spacing: .08em;
+      }
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--line);
+      }
+      .feature {
+        min-height: 190px;
+        padding: 26px 22px;
+        background: rgba(255, 249, 237, .78);
+      }
+      .feature strong {
+        display: grid;
+        place-items: center;
+        width: 54px;
+        height: 54px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(182, 21, 24, .22);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .52);
+        color: var(--cinnabar);
+        font-size: 24px;
+      }
+      .feature:nth-child(2) strong { color: var(--jade); border-color: rgba(18, 120, 110, .25); }
+      .feature:nth-child(3) strong { color: var(--gold); border-color: rgba(185, 137, 53, .32); }
+      .feature:nth-child(4) strong { color: var(--ink-soft); border-color: rgba(64, 56, 45, .24); }
+      .feature p { margin-top: 10px; font-size: 15px; }
+      .reason-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--line);
+      }
+      .reason {
+        min-height: 170px;
+        padding: 24px;
+        background: rgba(255, 249, 237, .78);
+      }
+      .reason strong {
+        display: block;
+        margin-bottom: 12px;
+        color: var(--cinnabar);
+        font-size: 18px;
+      }
+      .reason p {
+        font-size: 15px;
+      }
+
+      .steps {
+        display: grid;
+        gap: 14px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .steps li {
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr);
+        gap: 14px;
+        align-items: start;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(255, 249, 237, .72);
+      }
+      .step-number {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 999px;
+        background: var(--cinnabar);
+        color: white;
+        font: 800 16px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .ios-guide {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(310px, 390px);
+        gap: 34px;
+        align-items: center;
+      }
+      .guide-copy {
+        display: grid;
+        gap: 20px;
+      }
+      .guide-tabs {
+        display: inline-grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px;
+        max-width: 430px;
+        padding: 3px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(255, 249, 237, .72);
+      }
+      .guide-tab {
+        min-height: 42px;
+        padding: 0 14px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--muted);
+        font: 760 14px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        cursor: pointer;
+      }
+      .guide-tab[aria-selected="true"] {
+        background: var(--cinnabar);
+        color: white;
+      }
+      .guide-tab:focus-visible {
+        outline: 3px solid rgba(182, 21, 24, .2);
+        outline-offset: 3px;
+      }
+      .guide-panel {
+        display: none;
+      }
+      .guide-panel.active {
+        display: block;
+      }
+      .guide-note {
+        padding: 16px 18px;
+        border-left: 4px solid var(--jade);
+        background: rgba(226, 240, 235, .62);
+        color: var(--ink-soft);
+        font-size: 15px;
+      }
+      .phone-frame {
+        width: min(100%, 360px);
+        margin-inline: auto;
+        padding: 12px;
+        border: 1px solid rgba(24, 22, 17, .18);
+        border-radius: 36px;
+        background: #111;
+        box-shadow: 0 32px 70px rgba(58, 38, 19, .24);
+      }
+      .phone-screen {
+        min-height: 640px;
+        overflow: hidden;
+        border-radius: 27px;
+        background: #f7f7f2;
+        color: #171717;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .ios-status {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 36px;
+        padding: 0 20px;
+        color: #222;
+        font-size: 13px;
+        font-weight: 760;
+      }
+      .ios-home-indicator {
+        width: 116px;
+        height: 4px;
+        margin: 16px auto 10px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, .28);
+      }
+      .ios-screen {
+        display: none;
+        min-height: 584px;
+        padding: 14px 16px 0;
+      }
+      .ios-screen.active {
+        display: block;
+      }
+      .ios-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 34px;
+        color: #0a64d6;
+        font-size: 15px;
+        font-weight: 650;
+      }
+      .ios-nav strong {
+        color: #171717;
+        font-size: 17px;
+      }
+      .ios-title {
+        margin: 14px 0 18px;
+        color: #171717;
+        font-size: 32px;
+        font-weight: 780;
+        line-height: 1.08;
+      }
+      .ios-list {
+        display: grid;
+        gap: 1px;
+        overflow: hidden;
+        border-radius: 14px;
+        background: rgba(60, 60, 67, .16);
+      }
+      .ios-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        min-height: 52px;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, .9);
+      }
+      .ios-row span {
+        color: #171717;
+        font-size: 16px;
+        font-weight: 650;
+      }
+      .ios-row small {
+        display: block;
+        margin-top: 2px;
+        color: #6d6d72;
+        font-size: 13px;
+        line-height: 1.25;
+      }
+      .ios-chevron {
+        color: #9a9aa1;
+        font-size: 22px;
+        line-height: 1;
+      }
+      .ios-field {
+        display: block;
+        width: 100%;
+        margin-top: 18px;
+        padding: 12px 14px;
+        border: 1px solid rgba(60, 60, 67, .16);
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+        color: #171717;
+        font: 600 13px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .ios-callout {
+        margin-top: 18px;
+        padding: 14px;
+        border-radius: 14px;
+        background: #fff4cf;
+        color: #5f4614;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+      .calendar-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+      }
+      .calendar-dot.red { background: var(--cinnabar); }
+      .calendar-dot.blue { background: #0a64d6; }
+      .calendar-dot.green { background: var(--jade); }
+      .calendar-toggle {
+        position: relative;
+        width: 46px;
+        height: 28px;
+        border-radius: 999px;
+        background: #dadade;
+      }
+      .calendar-toggle::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: white;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .22);
+      }
+      .calendar-toggle.on {
+        background: #32d074;
+      }
+      .calendar-toggle.on::after {
+        left: 21px;
+      }
+      .ios-toolbar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      .ios-button {
+        display: grid;
+        place-items: center;
+        min-height: 42px;
+        border-radius: 12px;
+        background: #0a64d6;
+        color: white;
+        font-weight: 760;
+      }
+      .ios-button.secondary {
+        background: rgba(10, 100, 214, .1);
+        color: #0a64d6;
+      }
+      code {
+        display: inline-block;
+        max-width: 100%;
+        padding: 2px 6px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        overflow-wrap: anywhere;
+        background: rgba(255, 253, 246, .88);
+        color: var(--ink);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      .credit-panel {
+        display: grid;
+        gap: 18px;
+      }
+      .credit-card {
+        display: grid;
+        gap: 12px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(255, 249, 237, .72);
+      }
+      .credit-card a {
+        color: var(--jade);
+        font-weight: 800;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 4px;
+      }
+      .quote-band {
+        padding: 82px 0;
+        text-align: center;
+      }
+      .quote-band blockquote {
+        margin: 0;
+        color: var(--ink);
+        font-size: clamp(28px, 3.2vw, 42px);
+        line-height: 1.34;
+      }
+      .quote-band p {
+        margin-top: 14px;
+        color: var(--muted);
+      }
+      footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 22px;
+        padding: 28px 0 0;
+        color: var(--muted);
+        font: 650 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        .button { transition: none; }
+        .button:hover { transform: none; }
+      }
+      @media (max-width: 980px) {
+        body { background-size: auto 720px; }
+        .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 50px; }
+        .almanac-card { min-height: auto; padding: 0 8px 28px; }
+        .page-card { max-width: 520px; margin-inline: auto; }
+        .timeline-inner { grid-template-columns: 108px minmax(0, 1fr); }
+        .timeline-title { padding: 18px; font-size: 22px; }
+        .section-grid { grid-template-columns: 1fr; gap: 28px; }
+        .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .reason-grid { grid-template-columns: 1fr; }
+        .ios-guide { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 640px) {
+        .site-shell { width: min(100% - 28px, 1180px); padding-top: 18px; }
+        .topbar { align-items: flex-start; }
+        .brand { font-size: 20px; }
+        .nav { gap: 14px; font-size: 13px; }
+        .nav a:nth-child(2) { display: none; }
+        h1 { font-size: clamp(46px, 14vw, 66px); }
+        .lead { font-size: 17px; }
+        .subscribe-panel { padding: 12px; }
+        .copy-row { grid-template-columns: minmax(0, 1fr); }
+        .link-token { display: none; }
+        .copy-row .button { width: 100%; }
+        .panel-actions { grid-template-columns: 1fr 1fr; }
+        .page-card { padding: 26px 20px 22px; min-height: 0; }
+        .page-card::before { left: 32px; }
+        .page-card::after { right: 32px; }
+        .date-display { min-height: 176px; }
+        .timeline-band { margin-top: 0; }
+        .timeline-inner { width: 100%; grid-template-columns: 1fr; }
+        .timeline-title { min-height: 78px; }
+        .timeline-scroll { padding-inline: 18px; }
+        section { padding: 54px 0; }
+        .feature-grid { grid-template-columns: 1fr; }
+        .guide-tabs { width: 100%; }
+        .phone-frame { border-radius: 28px; padding: 8px; }
+        .phone-screen { min-height: 600px; border-radius: 22px; }
+        footer { flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Daymark 首页">
+          <span class="seal" aria-hidden="true">日历</span>
+          <span>Daymark</span>
+          <span class="brand-tag">现代黄历</span>
+        </a>
+        <nav class="nav" aria-label="页面导航">
+          <a href="#subscribe">订阅地址</a>
+          <a href="#ios-guide">iPhone 指引</a>
+          <a href="#credits">鸣谢</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero" aria-label="Daymark 中国节日订阅">
+          <div>
+            <span class="eyebrow">中国节日 · 调休补班 · 二十四节气</span>
+            <h1>中国<span class="red">节日</span>，一键订阅到日历</h1>
+            <p class="lead">Daymark 汇集中国法定节假日、调休补班、纪念日和二十四节气，生成稳定的 .ics 订阅源，适合 Apple Calendar、Google Calendar、Outlook 和其他支持 iCalendar 的日历客户端。</p>
+            <div class="hero-meta" aria-label="覆盖范围">
+              <span class="meta-pill">法定节假日</span>
+              <span class="meta-pill">调休补班</span>
+              <span class="meta-pill">传统节日</span>
+              <span class="meta-pill">二十四节气</span>
+              <span class="meta-pill">纪念日</span>
+            </div>
+
+            <div class="subscribe-panel" id="subscribe">
+              <div class="copy-row" aria-label="日历订阅地址">
+                <span class="link-token" aria-hidden="true">ICS</span>
+                <input class="copy-input" data-calendar-url-input value="__CALENDAR_URL_ATTR__" readonly aria-label="Daymark 日历订阅链接">
+                <button class="button primary" type="button" data-copy-calendar>复制订阅链接</button>
+              </div>
+              <div class="panel-actions" aria-label="日历客户端">
+                <a class="button" href="__CALENDAR_PATH__">下载日历</a>
+                <a class="button" href="__CALENDAR_URL_ATTR__" data-calendar-url-link>Apple Calendar</a>
+                <a class="button" href="__CALENDAR_URL_ATTR__" data-calendar-url-link>Google Calendar</a>
+                <a class="button" href="__CALENDAR_URL_ATTR__" data-calendar-url-link>Outlook</a>
+              </div>
+              <span class="copy-status" data-copy-status aria-live="polite"></span>
+              <p class="credit-line">数据鸣谢 <a href="https://timor.tech/api/holiday/year" rel="noopener noreferrer">timor.tech API</a></p>
+            </div>
+          </div>
+
+          <aside class="almanac-card" aria-label="Daymark 黄历预览">
+            <div class="hanger" aria-hidden="true"></div>
+              <div class="page-card">
+              <div class="page-head">
+                <span data-chinese-year>北京时间</span>
+                <span>中国日历</span>
+              </div>
+              <div class="date-display">
+                <div>
+                  <span data-lunar-date>农历</span>
+                  <strong data-gregorian-date>--/--</strong>
+                  <small data-weekday>--</small>
+                  <div class="beijing-clock" data-beijing-time>--:--:--</div>
+                </div>
+              </div>
+              <div class="almanac-tags">
+                <div class="tag-row">
+                  <b>宜</b>
+                  <p>订阅日历、出行、学习、祈福</p>
+                </div>
+                <div class="tag-row">
+                  <b>忌</b>
+                  <p>临时翻公告、重复导入、错过补班</p>
+                </div>
+              </div>
+              <div class="solar-note">
+                <strong data-today-event-title>正在读取今日历法</strong>
+                <p data-today-event-note>以北京时间计算今天，并从 Daymark 订阅源里挑出近期事件。</p>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <div class="timeline-band" aria-label="近期大事">
+          <div class="timeline-inner">
+            <div class="timeline-title">近期<br>大事</div>
+            <div class="timeline-scroll" data-timeline aria-live="polite">
+              <div class="moment active">
+                <div class="moment-date">今天<strong>--</strong>--</div>
+                <p>北京时间</p>
+                <small>正在读取</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section aria-label="Daymark 动机">
+          <div class="section-grid">
+            <div>
+              <p class="section-kicker">WHY DAYMARK</p>
+              <h2>补齐系统日历不够细的中国节日</h2>
+              <p>Apple 自带节假日适合基础提醒，但对中国用户来说，节气、调休补班、纪念日和部分传统节日经常不够完整。Daymark 做的是一份更贴近中文日历使用习惯的订阅源。</p>
+            </div>
+            <div class="reason-grid">
+              <article class="reason">
+                <strong>缺的补上</strong>
+                <p>把二十四节气、传统节日、纪念日和法定节假日放进同一份日历，少靠临时搜索确认日期。</p>
+              </article>
+              <article class="reason">
+                <strong>调休说清</strong>
+                <p>把“哪几天休、哪几天补班”整理成全天事件，尤其适合节前查看安排。</p>
+              </article>
+              <article class="reason">
+                <strong>避免重复</strong>
+                <p>添加 Daymark 后，可以隐藏系统自带“中国大陆节假日”，保留一份更完整的中国日历。</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="coverage">
+          <div class="section-grid">
+            <div>
+              <p class="section-kicker">COVERAGE</p>
+              <h2>不是普通节日表，是中国日历订阅源</h2>
+              <p>Daymark 把节假日、调休补班和节气整理成可订阅的全天事件。订阅一次，后续数据更新会随客户端刷新同步。</p>
+            </div>
+            <div class="feature-grid">
+              <article class="feature">
+                <strong>节</strong>
+                <h3>全量收录</h3>
+                <p>覆盖中国法定节假日、传统节日、纪念日和按星期计算的节日。</p>
+              </article>
+              <article class="feature">
+                <strong>更</strong>
+                <h3>自动更新</h3>
+                <p>订阅链接长期稳定，后续年度数据更新后由日历客户端同步。</p>
+              </article>
+              <article class="feature">
+                <strong>稳</strong>
+                <h3>稳定可靠</h3>
+                <p>输出标准 iCalendar，事件 UID 稳定，减少重复导入和日程混乱。</p>
+              </article>
+              <article class="feature">
+                <strong>同</strong>
+                <h3>多端同步</h3>
+                <p>一键订阅后，同步到你已有设备的系统日历应用。</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="ios-guide" aria-label="iPhone 操作指引">
+          <div class="section-grid">
+            <div>
+              <p class="section-kicker">IPHONE GUIDE</p>
+              <h2>照着 iPhone 里的日历操作走</h2>
+              <p>先把 Daymark 添加为订阅日历，再把系统自带的“中国大陆节假日”取消勾选，避免同一天出现两份节假日提醒。</p>
+            </div>
+            <div class="ios-guide">
+              <div class="guide-copy">
+                <div class="guide-tabs" role="tablist" aria-label="iPhone 操作演示">
+                  <button class="guide-tab" id="tab-add" type="button" role="tab" aria-selected="true" aria-controls="panel-add" data-guide-tab="add">添加订阅</button>
+                  <button class="guide-tab" id="tab-hide" type="button" role="tab" aria-selected="false" aria-controls="panel-hide" data-guide-tab="hide">隐藏重复</button>
+                </div>
+                <div class="guide-panel active" id="panel-add" role="tabpanel" aria-labelledby="tab-add" data-guide-panel="add">
+                  <ol class="steps">
+                    <li>
+                      <span class="step-number">1</span>
+                      <p>点击页面首屏的“复制订阅链接”。</p>
+                    </li>
+                    <li>
+                      <span class="step-number">2</span>
+                      <p>打开 iPhone 的“日历”，进入底部“日历”，点“添加日历”。</p>
+                    </li>
+                    <li>
+                      <span class="step-number">3</span>
+                      <p>选择“添加订阅日历”，粘贴 <code data-calendar-url-text>__CALENDAR_URL__</code>，继续并存储。</p>
+                    </li>
+                  </ol>
+                </div>
+                <div class="guide-panel" id="panel-hide" role="tabpanel" aria-labelledby="tab-hide" data-guide-panel="hide">
+                  <ol class="steps">
+                    <li>
+                      <span class="step-number">1</span>
+                      <p>在 iPhone“日历”里点底部“日历”，展开节假日或其他日历分组。</p>
+                    </li>
+                    <li>
+                      <span class="step-number">2</span>
+                      <p>找到系统自带的“中国大陆节假日”，取消勾选或关闭显示。</p>
+                    </li>
+                    <li>
+                      <span class="step-number">3</span>
+                      <p>保留“Daymark 中国节日订阅”，这样节假日、节气和调休提醒不会重复出现。</p>
+                    </li>
+                  </ol>
+                </div>
+                <p class="guide-note">不同 iOS 版本的入口名称可能略有差异。核心动作是：添加订阅日历，然后在日历列表里隐藏系统自带节假日。</p>
+              </div>
+              <div class="phone-frame" aria-label="iPhone 日历操作模拟">
+                <div class="phone-screen">
+                  <div class="ios-status"><span>9:41</span><span>5G</span></div>
+                  <div class="ios-screen active" data-phone-screen="add">
+                    <div class="ios-nav"><span>取消</span><strong>添加日历</strong><span>下一步</span></div>
+                    <h3 class="ios-title">订阅日历</h3>
+                    <div class="ios-list">
+                      <div class="ios-row">
+                        <div>
+                          <span>账户</span>
+                          <small>iCloud</small>
+                        </div>
+                        <span class="ios-chevron">›</span>
+                      </div>
+                      <div class="ios-row">
+                        <div>
+                          <span>添加订阅日历</span>
+                          <small>使用稳定的 .ics 地址自动更新</small>
+                        </div>
+                        <span class="ios-chevron">›</span>
+                      </div>
+                    </div>
+                    <div class="ios-field" data-calendar-url-text>__CALENDAR_URL__</div>
+                    <div class="ios-callout">粘贴 Daymark 订阅链接后，iPhone 会把节日、节气和调休作为全天事件同步进系统日历。</div>
+                    <div class="ios-toolbar">
+                      <div class="ios-button secondary">取消</div>
+                      <div class="ios-button">存储</div>
+                    </div>
+                  </div>
+                  <div class="ios-screen" data-phone-screen="hide">
+                    <div class="ios-nav"><span>完成</span><strong>日历</strong><span>添加日历</span></div>
+                    <h3 class="ios-title">显示日历</h3>
+                    <div class="ios-list">
+                      <div class="ios-row">
+                        <div>
+                          <span>Daymark 中国节日订阅</span>
+                          <small>节假日、节气、调休补班</small>
+                        </div>
+                        <span class="calendar-dot red" aria-hidden="true"></span>
+                      </div>
+                      <div class="ios-row">
+                        <div>
+                          <span>中国大陆节假日</span>
+                          <small>系统自带，建议隐藏避免重复</small>
+                        </div>
+                        <span class="calendar-toggle" aria-hidden="true"></span>
+                      </div>
+                      <div class="ios-row">
+                        <div>
+                          <span>家庭</span>
+                          <small>个人日程</small>
+                        </div>
+                        <span class="calendar-dot blue" aria-hidden="true"></span>
+                      </div>
+                      <div class="ios-row">
+                        <div>
+                          <span>工作</span>
+                          <small>会议和提醒</small>
+                        </div>
+                        <span class="calendar-dot green" aria-hidden="true"></span>
+                      </div>
+                    </div>
+                    <div class="ios-callout">这里是“隐藏/取消显示”，不是删除 Daymark。保留 Daymark，关闭系统自带节假日，就不会重复。</div>
+                  </div>
+                  <div class="ios-home-indicator"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="credits">
+          <div class="section-grid">
+            <div>
+              <p class="section-kicker">CREDITS</p>
+              <h2>数据与鸣谢</h2>
+              <p>Daymark 会持续整理中国节日、节气和休班提醒，以标准订阅文件提供给用户使用。</p>
+            </div>
+            <div class="credit-panel">
+              <div class="credit-card">
+                <h3>调休补班数据鸣谢 timor.tech API</h3>
+                <p>节假日与调休补班数据补充鸣谢 <a href="https://timor.tech/api/holiday/year" rel="noopener noreferrer">timor.tech 节假日 API</a>。Daymark 会把公开数据整理为稳定的 iCalendar 订阅源。</p>
+              </div>
+              <div class="credit-card">
+                <h3>订阅文件状态</h3>
+                <p>最近生成时间：__GENERATED_TIME__。订阅地址固定为 <code data-calendar-url-text>__CALENDAR_URL__</code>。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="quote-band" aria-label="Daymark 标语">
+          <blockquote>历法有常，日子有光。</blockquote>
+          <p>让时间的安排，更从容。</p>
+        </div>
+      </main>
+
+      <footer>
+        <span>Daymark 中国节日订阅</span>
+        <span>daymark.agentclub.dev · __CALENDAR_PATH__</span>
+      </footer>
+    </div>
+
+    <script>
+      const calendarPath = __CALENDAR_PATH_JSON__;
+      const configuredCalendarUrl = __CALENDAR_URL_JSON__;
+      const calendarEvents = __EVENTS_JSON__;
+      const beijingTimeZone = "Asia/Shanghai";
+      const solarTermSummaries = new Set([
+        "小寒",
+        "大寒",
+        "立春",
+        "雨水",
+        "惊蛰",
+        "春分",
+        "清明",
+        "谷雨",
+        "立夏",
+        "小满",
+        "芒种",
+        "夏至",
+        "小暑",
+        "大暑",
+        "立秋",
+        "处暑",
+        "白露",
+        "秋分",
+        "寒露",
+        "霜降",
+        "立冬",
+        "小雪",
+        "大雪",
+        "冬至",
+      ]);
+      const lunarMonthNames = [
+        "",
+        "正月",
+        "二月",
+        "三月",
+        "四月",
+        "五月",
+        "六月",
+        "七月",
+        "八月",
+        "九月",
+        "十月",
+        "冬月",
+        "腊月",
+      ];
+      const lunarDayNames = [
+        "",
+        "初一",
+        "初二",
+        "初三",
+        "初四",
+        "初五",
+        "初六",
+        "初七",
+        "初八",
+        "初九",
+        "初十",
+        "十一",
+        "十二",
+        "十三",
+        "十四",
+        "十五",
+        "十六",
+        "十七",
+        "十八",
+        "十九",
+        "二十",
+        "廿一",
+        "廿二",
+        "廿三",
+        "廿四",
+        "廿五",
+        "廿六",
+        "廿七",
+        "廿八",
+        "廿九",
+        "三十",
+      ];
+      const pageOrigin = window.location.origin === "null" ? "" : window.location.origin;
+      const resolvedCalendarUrl = configuredCalendarUrl.startsWith("http")
+        ? configuredCalendarUrl
+        : pageOrigin
+          ? new URL(calendarPath, pageOrigin).href
+          : calendarPath;
+
+      document.querySelectorAll("[data-calendar-url-link]").forEach((node) => {
+        node.href = resolvedCalendarUrl;
+      });
+
+      document.querySelectorAll("[data-calendar-url-text]").forEach((node) => {
+        node.textContent = resolvedCalendarUrl;
+      });
+
+      const copyInput = document.querySelector("[data-calendar-url-input]");
+      if (copyInput) {
+        copyInput.value = resolvedCalendarUrl;
+        copyInput.addEventListener("focus", () => copyInput.select());
+      }
+
+      const copyStatus = document.querySelector("[data-copy-status]");
+      const copyButtons = [...document.querySelectorAll("[data-copy-calendar]")];
+      const copyButtonLabels = new Map(copyButtons.map((button) => [button, button.textContent]));
+      const guideTabs = [...document.querySelectorAll("[data-guide-tab]")];
+      const guidePanels = [...document.querySelectorAll("[data-guide-panel]")];
+      const phoneScreens = [...document.querySelectorAll("[data-phone-screen]")];
+
+      async function copyCalendarUrl() {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(resolvedCalendarUrl);
+          return;
+        }
+
+        if (!copyInput) return;
+        copyInput.focus();
+        copyInput.select();
+        document.execCommand("copy");
+      }
+
+      copyButtons.forEach((button) => {
+        button.addEventListener("click", async () => {
+          try {
+            await copyCalendarUrl();
+            copyStatus.textContent = "订阅链接已复制";
+            copyButtons.forEach((copyButton) => {
+              copyButton.textContent = "已复制";
+            });
+            window.setTimeout(() => {
+              copyStatus.textContent = "";
+              copyButtons.forEach((copyButton) => {
+                copyButton.textContent = copyButtonLabels.get(copyButton);
+              });
+            }, 1800);
+          } catch {
+            copyStatus.textContent = "复制失败，请手动选择上方链接";
+          }
+        });
+      });
+
+      guideTabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const target = tab.dataset.guideTab;
+          guideTabs.forEach((guideTab) => {
+            guideTab.setAttribute("aria-selected", String(guideTab === tab));
+          });
+          guidePanels.forEach((panel) => {
+            panel.classList.toggle("active", panel.dataset.guidePanel === target);
+          });
+          phoneScreens.forEach((screen) => {
+            screen.classList.toggle("active", screen.dataset.phoneScreen === target);
+          });
+        });
+      });
+
+      const chineseCalendarParts = new Intl.DateTimeFormat("en-US-u-ca-chinese", {
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+        timeZone: beijingTimeZone,
+      });
+      const chineseYearFormatter = new Intl.DateTimeFormat("zh-CN-u-ca-chinese", {
+        year: "numeric",
+        timeZone: beijingTimeZone,
+      });
+      const weekdayFormatter = new Intl.DateTimeFormat("zh-CN", {
+        weekday: "short",
+        timeZone: beijingTimeZone,
+      });
+      const clockFormatter = new Intl.DateTimeFormat("zh-CN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+        timeZone: beijingTimeZone,
+      });
+
+      const chineseYearNode = document.querySelector("[data-chinese-year]");
+      const lunarDateNode = document.querySelector("[data-lunar-date]");
+      const gregorianDateNode = document.querySelector("[data-gregorian-date]");
+      const weekdayNode = document.querySelector("[data-weekday]");
+      const beijingTimeNode = document.querySelector("[data-beijing-time]");
+      const todayEventTitleNode = document.querySelector("[data-today-event-title]");
+      const todayEventNoteNode = document.querySelector("[data-today-event-note]");
+      const timelineNode = document.querySelector("[data-timeline]");
+
+      function beijingParts(date) {
+        const parts = new Intl.DateTimeFormat("en-CA", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          timeZone: beijingTimeZone,
+        }).formatToParts(date);
+
+        const value = (type) => parts.find((part) => part.type === type)?.value;
+        return {
+          year: Number(value("year")),
+          month: Number(value("month")),
+          day: Number(value("day")),
+          ymd: `${value("year")}-${value("month")}-${value("day")}`,
+        };
+      }
+
+      function dateKeyToUtcTime(dateKey) {
+        const [year, month, day] = dateKey.split("-").map(Number);
+        return Date.UTC(year, month - 1, day);
+      }
+
+      function daysBetween(startDateKey, endDateKey) {
+        return Math.round((dateKeyToUtcTime(endDateKey) - dateKeyToUtcTime(startDateKey)) / 86400000);
+      }
+
+      function addDaysToDateKey(dateKey, days) {
+        const date = new Date(dateKeyToUtcTime(dateKey) + days * 86400000);
+        return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+      }
+
+      function parseChineseYear(date) {
+        const formatted = chineseYearFormatter.format(date);
+        return formatted.replace(/^\d+/, "");
+      }
+
+      function lunarDateLabel(date) {
+        const parts = chineseCalendarParts.formatToParts(date);
+        const lunarMonth = Number(parts.find((part) => part.type === "month")?.value);
+        const lunarDay = Number(parts.find((part) => part.type === "day")?.value);
+        return `${lunarMonthNames[lunarMonth] ?? `${lunarMonth}月`}${lunarDayNames[lunarDay] ?? lunarDay}`;
+      }
+
+      function eventCategory(event) {
+        if (event.isTodayMarker) return "北京时间";
+        if (event.summary === "✦ 班") return "调休补班";
+        if (event.summary.includes("（休）")) {
+          const duration = Math.max(1, daysBetween(event.date, event.endDate));
+          return `放假 ${duration} 天`;
+        }
+        if (solarTermSummaries.has(event.summary)) return "二十四节气";
+        return "节日纪念";
+      }
+
+      function displaySummary(event) {
+        if (event.isTodayMarker) return "今天";
+        if (event.summary === "✦ 班") return "补班";
+        return event.summary.replace("（休）", "");
+      }
+
+      function eventExplainerUrl(event) {
+        if (event.isTodayMarker || event.summary === "✦ 班") return "";
+        return `https://baike.baidu.com/searchword/?word=${encodeURIComponent(displaySummary(event))}`;
+      }
+
+      function eventsAroundToday(todayKey) {
+        const sortedEvents = [...calendarEvents].sort((a, b) => {
+          const byDate = a.date.localeCompare(b.date);
+          if (byDate !== 0) return byDate;
+          return a.summary.localeCompare(b.summary, "zh-CN");
+        });
+        const previous = sortedEvents.filter((event) => event.date < todayKey).slice(-3);
+        const active = sortedEvents.filter((event) => event.date <= todayKey && todayKey < event.endDate);
+        const upcoming = sortedEvents.filter((event) => event.date > todayKey).slice(0, active.length ? 4 : 5);
+
+        if (active.length) {
+          return [...previous, ...active.map((event) => ({ ...event, isTodayActive: true })), ...upcoming];
+        }
+
+        return [
+          ...previous,
+          {
+            summary: "今天",
+            date: todayKey,
+            endDate: addDaysToDateKey(todayKey, 1),
+            isTodayMarker: true,
+          },
+          ...upcoming,
+        ];
+      }
+
+      function renderTimeline(todayKey, todayParts) {
+        if (!timelineNode) return;
+        timelineNode.replaceChildren(
+          ...eventsAroundToday(todayKey).map((event) => {
+            const date = new Date(`${event.date}T00:00:00+08:00`);
+            const parts = beijingParts(date);
+            const item = document.createElement("div");
+            item.className = `moment${event.isTodayActive ? " active" : ""}${event.isTodayMarker ? " today" : ""}`;
+            const momentDate = document.createElement("div");
+            momentDate.className = "moment-date";
+            momentDate.append(
+              event.isTodayMarker ? `${todayParts.year}年` : `${parts.month}月`,
+              Object.assign(document.createElement("strong"), { textContent: String(parts.day) }),
+              weekdayFormatter.format(date),
+            );
+
+            const title = document.createElement("p");
+            const explainerUrl = eventExplainerUrl(event);
+            if (explainerUrl) {
+              const link = document.createElement("a");
+              link.className = "moment-link";
+              link.href = explainerUrl;
+              link.target = "_blank";
+              link.rel = "noopener noreferrer";
+              link.textContent = displaySummary(event);
+              link.setAttribute("aria-label", `查看${displaySummary(event)}百科解读`);
+              title.append(link);
+            } else {
+              title.textContent = displaySummary(event);
+            }
+
+            const category = document.createElement("small");
+            category.textContent = event.isTodayMarker ? "" : eventCategory(event);
+            item.append(momentDate, title, category);
+            return item;
+          }),
+        );
+      }
+
+      function renderAlmanac(now = new Date()) {
+        const parts = beijingParts(now);
+        const todayKey = parts.ymd;
+        const activeEvents = calendarEvents.filter((event) => event.date <= todayKey && todayKey < event.endDate);
+        const nextEvent = calendarEvents
+          .filter((event) => event.date > todayKey)
+          .sort((a, b) => a.date.localeCompare(b.date))[0];
+        const currentLabels = activeEvents.map(displaySummary);
+
+        if (chineseYearNode) chineseYearNode.textContent = `${parts.year} · ${parseChineseYear(now)}`;
+        if (lunarDateNode) lunarDateNode.textContent = lunarDateLabel(now);
+        if (gregorianDateNode) gregorianDateNode.textContent = `${parts.month}/${parts.day}`;
+        if (weekdayNode) weekdayNode.textContent = `${weekdayFormatter.format(now)} · 北京时间`;
+        if (beijingTimeNode) beijingTimeNode.textContent = clockFormatter.format(now);
+
+        if (todayEventTitleNode && todayEventNoteNode) {
+          if (activeEvents.length) {
+            todayEventTitleNode.textContent = currentLabels.join(" · ");
+            todayEventNoteNode.textContent = "今天已有事件在 Daymark 订阅源里，打开系统日历就能看到全天提醒。";
+          } else if (nextEvent) {
+            const remainingDays = daysBetween(todayKey, nextEvent.date);
+            todayEventTitleNode.textContent = `下一件大事：${displaySummary(nextEvent)}`;
+            todayEventNoteNode.textContent = `距离 ${displaySummary(nextEvent)} 还有 ${remainingDays} 天。滚轴会以今天为中心展示前后节日、节气和休班提醒。`;
+          } else {
+            todayEventTitleNode.textContent = "今天暂无订阅事件";
+            todayEventNoteNode.textContent = "订阅源会在未来年度数据更新后继续同步。";
+          }
+        }
+
+        renderTimeline(todayKey, parts);
+      }
+
+      renderAlmanac();
+      window.setInterval(renderAlmanac, 1000);
+    </script>
+  </body>
+</html>
