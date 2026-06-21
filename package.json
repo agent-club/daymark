@@ -2,12 +2,14 @@
   "name": "daymark",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.30.3",
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.mjs",
-    "test": "node test/calendar.test.mjs"
+    "build": "pnpm --filter @daymark/calendar build && pnpm --filter @daymark/docs build && pnpm --filter @daymark/worker build",
+    "test": "node test/calendar.test.mjs",
+    "deploy": "pnpm --filter @daymark/worker deploy"
   },
   "devDependencies": {
-    "wrangler": "^4.36.0"
+    "@daymark/calendar": "workspace:*"
   }
 }

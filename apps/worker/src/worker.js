@@ -1,4 +1,4 @@
-import { generateCalendar, hasLocalAdjustedHolidaySchedule } from "./calendar.js";
+import { generateCalendar, hasLocalAdjustedHolidaySchedule } from "@daymark/calendar";
 
 const CALENDAR_PATH = "/calendar/daymark.ics";
 const CACHE_CONTROL = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800";

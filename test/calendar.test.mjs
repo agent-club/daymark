@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { generateCalendar, eventsForYear } from "../src/calendar.js";
-import worker from "../src/worker.js";
+import { generateCalendar, eventsForYear } from "@daymark/calendar";
+import worker from "../apps/worker/src/worker.js";
 
 const ics = generateCalendar({ now: new Date(Date.UTC(2026, 5, 20)), pastYears: 0, futureYears: 0 });
 

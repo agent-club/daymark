@@ -1,0 +1,16 @@
+{
+  "name": "@daymark/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node -e \"await import('./src/worker.js')\"",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@daymark/calendar": "workspace:*"
+  },
+  "devDependencies": {
+    "wrangler": "^4.36.0"
+  }
+}

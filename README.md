@@ -1,35 +1,76 @@
-# Daymark on Cloudflare
+# Daymark
 
 Apple Calendar subscription endpoint for holiday and reminder calendars.
 
 ## Architecture
 
-- Cloudflare Worker returns a deterministic `.ics` file.
-- The calendar is generated from a rolling year window.
+- `packages/calendar` exposes `@daymark/calendar`, the shared calendar generator.
+- `apps/worker` contains the Cloudflare Worker that returns the `.ics` subscription endpoint.
+- `apps/docs` builds the static documentation site and a preview `.ics` file.
 - Event `UID` values are stable across deployments to avoid duplicate events.
-- Responses include calendar content type, validators, and cache headers.
-- The source repo stays private; the public surface is only the subscription URL.
+- Worker responses include calendar content type, validators, and cache headers.
 
-For very high traffic, the same generator can emit a static file with `npm run build`, then serve `dist/calendar/daymark.ics` from Cloudflare Pages or R2.
+The source repo stays private; the public surface is the subscription URL and, optionally, the docs site.
 
 ## Local Checks
 
 ```sh
-npm install
-npm test
-npm run build
+pnpm install
+pnpm test
+pnpm build
 ```
+
+Build outputs are written under each app, for example `apps/docs/dist`.
 
 ## Deploy
 
 ```sh
-npx wrangler deploy
+pnpm deploy
 ```
 
 The Worker path is:
 
 ```text
 /calendar/daymark.ics
+```
+
+## Cloudflare Build Settings
+
+This repo now has two deployable Cloudflare surfaces:
+
+- Worker project: serves the live calendar subscription endpoint.
+- Pages project: serves the documentation site built from `apps/docs`.
+
+For the Worker Git deployment, use:
+
+```text
+Root directory:
+<repository root>
+
+Build command:
+pnpm build
+
+Deploy command:
+pnpm deploy
+```
+
+For the Pages documentation site, use:
+
+```text
+Root directory:
+<repository root>
+
+Build command:
+pnpm --filter @daymark/docs build
+
+Build output directory:
+apps/docs/dist
+```
+
+Set this Pages environment variable after choosing the real calendar hostname:
+
+```text
+DAYMARK_CALENDAR_ORIGIN=https://calendar.example.com
 ```
 
 ## Custom Domain
@@ -55,7 +96,7 @@ pattern = "calendar.example.com"
 custom_domain = true
 ```
 
-`workers_dev = false` is enabled so the `*.workers.dev` fallback does not stay public. Before deploying, replace and uncomment the Custom Domain route in `wrangler.toml`.
+`workers_dev = false` is enabled so the `*.workers.dev` fallback does not stay public. Before deploying, replace and uncomment the Custom Domain route in `apps/worker/wrangler.toml`.
 
 ## Abuse Protection
 
