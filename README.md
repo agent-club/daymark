@@ -1,16 +1,23 @@
 # Daymark
 
-Apple Calendar subscription endpoint for holiday and reminder calendars.
+Daymark is the product site and Apple Calendar subscription service for Chinese
+holiday, solar-term, and adjusted workday reminders.
 
 ## Architecture
 
-- `packages/calendar` exposes `@daymark/calendar`, the shared calendar generator.
-- `apps/worker` contains the Cloudflare Worker that returns the `.ics` subscription endpoint.
-- `apps/docs` builds the static documentation site and a preview `.ics` file.
-- Event `UID` values are stable across deployments to avoid duplicate events.
-- Worker responses include calendar content type, validators, and cache headers.
+- `packages/calendar` exposes `@daymark/calendar`, the shared iCalendar generator.
+- `apps/docs/index.html` is the public product homepage source.
+- `apps/docs/scripts/build.mjs` renders that HTML and a preview `.ics` file into `apps/docs/dist`.
+- `apps/worker` serves the live `.ics` subscription endpoint.
+- Event `UID` values are stable across releases to avoid duplicate events.
+- Calendar responses include content type, validators, and cache headers.
 
-The source repo stays private; the public surface is the subscription URL and, optionally, the docs site.
+The source repo stays private. The public product surface is:
+
+```text
+https://daymark.agentclub.dev/
+https://daymark.agentclub.dev/calendar/daymark.ics
+```
 
 ## Local Checks
 
@@ -20,96 +27,39 @@ pnpm test
 pnpm build
 ```
 
-Build outputs are written under each app, for example `apps/docs/dist`.
+Generated artifacts are written under each app, for example `apps/docs/dist`.
 
-## Deploy
+## Product Surface
 
-```sh
-pnpm run deploy
-```
-
-The Worker path is:
+Daymark is provided at:
 
 ```text
-/calendar/daymark.ics
+https://daymark.agentclub.dev/
+https://daymark.agentclub.dev/calendar/daymark.ics
 ```
 
-## Cloudflare Build Settings
-
-This repo now has two deployable Cloudflare surfaces:
-
-- Worker project: serves the live calendar subscription endpoint.
-- Pages project: serves the documentation site built from `apps/docs`.
-
-For the Worker Git deployment, use:
+The homepage presents Daymark as a product page for Chinese holiday, solar-term,
+and adjusted workday subscriptions. It includes one-click copying for the live
+subscription URL:
 
 ```text
-Root directory:
-<repository root>
-
-Build command:
-pnpm build
-
-Deploy command:
-pnpm run deploy
+https://daymark.agentclub.dev/calendar/daymark.ics
 ```
 
-For the Pages documentation site, use:
+## Service Protection
 
-```text
-Root directory:
-<repository root>
+The live calendar endpoint uses two protections:
 
-Build command:
-pnpm --filter @daymark/docs build
+- Edge caching for the `.ics` response. Repeated requests can be served from
+  cache, and conditional requests with a matching `ETag` return `304`.
+- Rate limiting with `CALENDAR_RATE_LIMITER`, configured at 60 requests per 10
+  seconds per `cf-connecting-ip`.
 
-Build output directory:
-apps/docs/dist
-```
-
-Set this Pages environment variable after choosing the real calendar hostname:
-
-```text
-DAYMARK_CALENDAR_ORIGIN=https://calendar.example.com
-```
-
-## Custom Domain
-
-This Worker is the origin for the calendar endpoint, so Cloudflare Custom Domains are the preferred setup.
-
-In Cloudflare:
-
-1. Add the domain to Cloudflare and make sure the zone is active.
-2. Go to Workers & Pages > daymark > Settings > Domains & Routes.
-3. Add a Custom Domain, for example `calendar.example.com`.
-4. Subscribe to:
-
-```text
-https://calendar.example.com/calendar/daymark.ics
-```
-
-The same can be managed from `wrangler.toml` after choosing the real hostname:
-
-```toml
-[[routes]]
-pattern = "calendar.example.com"
-custom_domain = true
-```
-
-`workers_dev = false` is enabled so the `*.workers.dev` fallback does not stay public. Before deploying, replace and uncomment the Custom Domain route in `apps/worker/wrangler.toml`.
-
-## Abuse Protection
-
-The Worker uses two protections for `/calendar/daymark.ics`:
-
-- Cloudflare Cache API for the `.ics` response. Repeated requests can be served from edge cache, and conditional requests with a matching `ETag` return `304`.
-- Cloudflare Workers Rate Limiting binding named `CALENDAR_RATE_LIMITER`, configured at 60 requests per 10 seconds per `cf-connecting-ip`.
-
-For stronger edge protection, also add a Cloudflare WAF rate limiting rule for the custom hostname:
+The production WAF rule targets the public subscription path:
 
 ```text
 Expression:
-(http.host eq "calendar.example.com" and http.request.uri.path eq "/calendar/daymark.ics")
+(http.host eq "daymark.agentclub.dev" and http.request.uri.path eq "/calendar/daymark.ics")
 
 Suggested action:
 Managed Challenge or Block
@@ -118,8 +68,14 @@ Suggested threshold:
 60 requests per 10 seconds per IP
 ```
 
-For a private or small-audience calendar, prefer a less discoverable path and only share that subscription URL.
+## Data Credits
+
+Daymark prefers reviewed local holiday schedules when available. For future years
+that are not yet maintained locally, the service can supplement adjusted holiday
+data from the `timor.tech` holiday API at `https://timor.tech/api/holiday/year`.
 
 ## Notes
 
-This first version covers deterministic festival reminders. Official public holidays, makeup workdays, and lunar-calendar events should be added from reviewed source data before publishing those categories.
+This version covers deterministic festival reminders, solar terms, and reviewed
+adjusted holiday schedules. Future public holiday schedules can be added locally
+or fetched by the service when the official year data is available.
