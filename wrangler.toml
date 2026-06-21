@@ -1,0 +1,20 @@
+name = "daymark"
+main = "src/worker.js"
+compatibility_date = "2026-06-20"
+workers_dev = false
+
+[observability]
+enabled = true
+
+[[ratelimits]]
+name = "CALENDAR_RATE_LIMITER"
+namespace_id = "2026062001"
+
+  [ratelimits.simple]
+  limit = 60
+  period = 10
+
+# Replace calendar.example.com with the real hostname before deploying.
+# [[routes]]
+# pattern = "calendar.example.com"
+# custom_domain = true
